@@ -15,7 +15,7 @@ def search_for_digit_at_position(row, i,writtenDigits):
     return None
 
 
-def findCalibration(row, writtenDigits = False):
+def find_calibration(row, writtenDigits = False):
     calibration = ""
     for i in range(len(row)):
         digit = search_for_digit_at_position(row, i, writtenDigits)
@@ -32,8 +32,8 @@ def findCalibration(row, writtenDigits = False):
     return int(calibration)
 
 
-calibrations_1 = [findCalibration(row) for row in data.split("\n")]
+calibrations_1 = [find_calibration(row) for row in data.split("\n")]
 print(f"Part 1: Sum of calibrations is: {sum(calibrations_1)}")
 
-calibrations_2 = [findCalibration(row, True) for row in data.split("\n")]
+calibrations_2 = [find_calibration(row, True) for row in data.split("\n")]
 print(f"Part 2: Sum of calibrations is: {sum(calibrations_2)}")
