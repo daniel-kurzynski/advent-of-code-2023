@@ -14,7 +14,7 @@ print(f"Part 1 - Total winnings: {sum([rank * bids[cards] for (rank, cards) in e
 
 def sorting_key_joker(cards):
     best_hand = cards
-    if cards.count("J") != 5:
+    if 0 < cards.count("J") < 5:
         most_common_card, _ = Counter(cards.replace("J", "")).most_common(1)[0]
         best_hand = cards.replace("J", most_common_card)
 
