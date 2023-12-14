@@ -5,26 +5,17 @@ import numpy as np
 data = get_data(day=14, year=2023)
 
 def parse_data(data):
-    lines = data.splitlines()
-    grid_size = len(lines[0]) + 2
-    padded_lines = ['#' * grid_size] + ['#' + line + '#' for line in lines] + ['#' * grid_size]
-    return np.array([list(line) for line in padded_lines])
+    return np.array([list(line) for line in data.splitlines()])
 
 def tilt_north(grid):
-    tilted_grid = grid.copy()
-    for col in range(tilted_grid.shape[1]):
-        column = tilted_grid[:, col]
-        cube_indices = [i for i, cell in enumerate(column) if cell == '#']
-        for i in range(len(cube_indices) - 1):
-            num_round_rocks = list(column[cube_indices[i]:cube_indices[i + 1]]).count('O')
-            tilted_grid[cube_indices[i] + 1:cube_indices[i] + 1 + num_round_rocks, col] = 'O'
-            tilted_grid[cube_indices[i] + 1 + num_round_rocks:cube_indices[i + 1], col] = '.'
+    tilt = lambda col: list("#".join(["".join(sorted(x, reverse=True)) for x in "".join(col).split("#")]))
+    tilted_grid = np.apply_along_axis(tilt, 0, grid)
     return tilted_grid
 
 def calculate_load(grid):
     num_rows = grid.shape[0]
     rows, _ = np.where(grid == 'O')
-    return sum(num_rows - 1 - row for row in rows)
+    return sum(num_rows - row for row in rows)
 
 grid = parse_data(data)
 tilted_grid = tilt_north(grid)
@@ -39,10 +30,8 @@ def simulate_cycles(grid, num_cycles):
         grid_hash = hash(grid.tobytes())
         if grid_hash in cycle_hashes:
             cycle_diff = cycle - cycle_hashes[grid_hash]
-            remaining_cycles = num_cycles - cycle
-            skip_cycles = (remaining_cycles // cycle_diff) * cycle_diff
-            cycle += skip_cycles
-            if cycle >= num_cycles:
+            cycle += ((num_cycles - cycle) // cycle_diff) * cycle_diff
+            if cycle == num_cycles:
                 break
         else:
             cycle_hashes[grid_hash] = cycle
