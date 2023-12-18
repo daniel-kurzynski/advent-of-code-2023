@@ -11,6 +11,7 @@ def find_min_heat_loss(grid, min_steps, max_steps):
     def neighbors(pos, direction, steps):
         x, y = pos
         directions = {'U': (-1, 0), 'D': (1, 0), 'L': (0, -1), 'R': (0, 1)}
+        turns = {'U': {'L': 'L', 'R': 'R' }, 'D': {'L': 'R', 'R': 'L'}, 'L': {'L': 'D', 'R': 'U'}, 'R': {'L': 'U', 'R': 'D'}}
         result = []
 
         # Continue in the same direction if within step limits
@@ -23,15 +24,7 @@ def find_min_heat_loss(grid, min_steps, max_steps):
         # Turn left and right if steps are equal to or exceed min_steps
         if steps >= min_steps:
             for turn in ['L', 'R']:
-                if direction == 'U':
-                    nd = 'L' if turn == 'L' else 'R'
-                elif direction == 'D':
-                    nd = 'R' if turn == 'L' else 'L'
-                elif direction == 'L':
-                    nd = 'D' if turn == 'L' else 'U'
-                else:  # direction == 'R'
-                    nd = 'U' if turn == 'L' else 'D'
-
+                nd = turns[direction][turn]
                 dx, dy = directions[nd]
                 nx, ny = x + dx, y + dy
                 if 0 <= nx < len(grid) and 0 <= ny < len(grid[0]):
@@ -57,8 +50,6 @@ def find_min_heat_loss(grid, min_steps, max_steps):
     return float('inf')
 
 grid = parse_data(data)
-min_heat_loss_normal = find_min_heat_loss(grid, 1, 3)  # For normal crucibles
-min_heat_loss_ultra = find_min_heat_loss(grid, 4, 10)  # For ultra crucibles
 
-print(f"Part 1 - Least Heat Loss for Normal Crucible: {min_heat_loss_normal}")
-print(f"Part 2 - Least Heat Loss for Ultra Crucible: {min_heat_loss_ultra}")
+print(f"Part 1 - Least Heat Loss for Normal Crucible: {find_min_heat_loss(grid, 1, 3)}")
+print(f"Part 2 - Least Heat Loss for Ultra Crucible: {find_min_heat_loss(grid, 4, 10)}")
