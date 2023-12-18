@@ -12,48 +12,46 @@ def parse_data(data):
     return instructions
 
 def calculate_lava_capacity(instructions):
+    length = 0
+    vertices = [(0, 0)]
     x, y = 0, 0
-    path = set()
 
     for direction, distance in instructions:
-        dx, dy = 0, 0
+        length += distance
         if direction == 'R':
-            dx = 1
+            x += distance
         elif direction == 'L':
-            dx = -1
+            x -= distance
         elif direction == 'U':
-            dy = -1
+            y += distance
         elif direction == 'D':
-            dy = 1
+            y -= distance
+        vertices.append((x, y))
 
-        for _ in range(distance):
-            x += dx
-            y += dy
-            path.add((x, y))
+    # Apply the Shoelace formula
+    area = 0
+    for i in range(len(vertices)-1):
+        x1, y1 = vertices[i]
+        x2, y2 = vertices[i + 1]
+        area += (y1+y2) * (x1 - x2)
+    area = abs(area) // 2 + length // 2 + 1
 
-    min_x = min(x for x, _ in path)
-    max_x = max(x for x, _ in path)
-    min_y = min(y for _, y in path)
-    max_y = max(y for _, y in path)
-
-    visited = set()
-    stack = [(min_x - 1, min_y - 1)]
-
-    while stack:
-        cx, cy = stack.pop()
-        if (cx, cy) in visited or (cx, cy) in path:
-            continue
-        visited.add((cx, cy))
-
-        for nx, ny in [(cx - 1, cy), (cx + 1, cy), (cx, cy - 1), (cx, cy + 1)]:
-            if min_x - 1 <= nx <= max_x + 1 and min_y - 1 <= ny <= max_y + 1:
-                stack.append((nx, ny))
-
-    total_area = (max_x - min_x + 3) * (max_y - min_y + 3)
-    lava_capacity = total_area - len(visited)
-
-    return lava_capacity
+    return area
 
 instructions = parse_data(data)
 lava_capacity = calculate_lava_capacity(instructions)
-print(f"Lavaduct Lagoon Capacity: {lava_capacity}")
+print(f"Part 1 - Lavaduct Lagoon Capacity: {lava_capacity}")
+
+def parse_data_hex(data):
+    instructions = []
+    direction_map = {0: 'R', 1: 'D', 2: 'L', 3: 'U'}
+    for line in data.split('\n'):
+        _, hex_code = line.rsplit(' ', 1)
+        distance = int(hex_code[2:7], 16)
+        direction = direction_map[int(hex_code[7], 16)]
+        instructions.append((direction, distance))
+    return instructions
+
+instructions_hex = parse_data_hex(data)
+lava_capacity = calculate_lava_capacity(instructions_hex)
+print(f"Part 2 - Lavaduct Lagoon Capacity from Hex: {lava_capacity}")
