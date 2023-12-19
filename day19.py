@@ -8,102 +8,50 @@ data = get_data(day=19, year=2023)
 
 def parse_data(data):
     workflows_section, parts_section = data.split("\n\n")
+    parts = [{k: int(v) for k, v in re.findall(r'(\w+)=(\d+)', line)} for line in parts_section.split('\n')]
 
-    workflow_pattern = re.compile(r'(\w+)\{(.+?)\}')
-    rule_pattern = re.compile(r'(\w+)([<>]=?)(\d+):(\w+|R|A)')
     workflows = {}
-
     for line in workflows_section.split('\n'):
-        name, rules_str = workflow_pattern.match(line).groups()
-        rules_raw = rules_str.split(',')
-
-        rules = []
-        for r in rules_raw:
-            if ":" in r:
-                attribute, operator, value, outcome = rule_pattern.match(r).groups()
-                rules.append((True, attribute, operator, int(value), outcome))
-            else:
-                rules.append((False, None, None, None, r))
-
+        name, rules_string = line[:-1].split('{')
+        rules = [(re.match(r'(\w+)([<>]=?)(\d+):(\w+|R|A)', r).groups()) if ':' in r else (None, None, None, r) for r in rules_string.split(',')]
         workflows[name] = rules
-
-    part_pattern = re.compile(r'(\w+)=(\d+)')
-    parts = []
-    for line in parts_section.split('\n'):
-        if line:
-            part_dict = dict(part_pattern.findall(line.strip("{}")))
-            parts.append({k: int(v) for k, v in part_dict.items()})
 
     return workflows, parts
 
 workflows, parts = parse_data(data)
 
-def apply_rules(part, rules):
-    rule_code = ""
-
-    for r in rules:
-        if r[0]:
-            _, attribute, operator, value, outcome = r
-            rule_code += f"'{outcome}' if part['{attribute}'] {operator} {value} else "
+def process_part(part, rules):
+    next_wf = "in"
+    while next_wf not in ['A', 'R']:
+        for attribute, operator, value, outcome in rules[next_wf]:
+            if operator and eval(f"part['{attribute}']{operator}{int(value)}"):
+                next_wf = outcome
+                break
         else:
-            _, _, _, _, outcome = r
-            rule_code += f"'{outcome}'"
-
-    return eval(rule_code)
-
-def process_part(part, workflows):
-    next = "in"
-    while next != 'A' and next != 'R':
-        next = apply_rules(part, workflows[next])
-    return next
-
+            next_wf = outcome
+    return next_wf
 
 workflows, parts = parse_data(data)
 sum_ratings = sum(sum(part.values()) for part in parts if process_part(part, workflows) == 'A')
 print(f"Part 1 - Sum of Ratings for Accepted Parts: {sum_ratings}")
 
-
-def split_range(part_range, rule):
-    conditional, attribute, operator, value, outcome = rule
-
-    if conditional:
-        start, end = part_range[attribute]
-        if operator == '<':
-            if end < value:
-                return part_range, None, outcome  # Entire range matches
-            elif start >= value:
-                return None, part_range, outcome  # Entire range does not match
-            else:
-                return {**part_range, attribute: (start, value - 1)}, {**part_range, attribute: (value, end)}, outcome
-        elif operator == '>':
-            if start > value:
-                return part_range, None, outcome  # Entire range matches
-            elif end <= value:
-                return None, part_range, outcome  # Entire range does not match
-            else:
-                return {**part_range, attribute: (value + 1, end)}, {**part_range, attribute: (start, value)}, outcome
-    else:
-        return part_range, None, outcome # Entire range matches
-
 def process_ranges(workflows):
-    queue = deque([({'x': (1, 4000), 'm': (1, 4000), 'a': (1, 4000), 's': (1, 4000)}, 'in')])
-    accepted_ranges = []
+    queue, accepted = deque([({'x': (1, 4000), 'm': (1, 4000), 'a': (1, 4000), 's': (1, 4000)}, 'in')]), []
 
     while queue:
-        part_range, current_workflow = queue.popleft()
-        for rule in workflows[current_workflow]:
-            part_match, part_range_non_match, outcome = split_range(part_range, rule)
+        part_range, wf = queue.popleft()
 
-            if part_match and outcome not in ['A', 'R']:
-                queue.append((part_match, outcome))
-            elif part_match and outcome == 'A':
-                accepted_ranges.append(part_match)
+        if wf == 'A': accepted.append(part_range)
+        if wf == 'R' or wf == 'A': continue
 
-            part_range = part_range_non_match
-
-    total_combinations = sum((r['x'][1] - r['x'][0] + 1) * (r['m'][1] - r['m'][0] + 1) *
-                             (r['a'][1] - r['a'][0] + 1) * (r['s'][1] - r['s'][0] + 1)
-                             for r in accepted_ranges)
-    return total_combinations
+        for attribute, operator, value, outcome in workflows[wf]:
+            if operator:
+                start, end, value = part_range[attribute][0], part_range[attribute][1], int(value)
+                if operator == '<' and end >= value or operator == '>' and start <= value:
+                    queue.append(({**part_range, attribute: (start, value - 1) if operator == '<' else (value + 1, end)}, outcome))
+                    part_range = {**part_range, attribute: (value, end) if operator == '<' else (start, value)}
+            else:
+                queue.append((part_range, outcome))
+    return sum((r['x'][1] - r['x'][0] + 1) * (r['m'][1] - r['m'][0] + 1) * (r['a'][1] - r['a'][0] + 1) * (r['s'][1] - r['s'][0] + 1) for r in accepted)
 
 print(f"Part 2 - Total Combinations: {process_ranges(workflows)}")
