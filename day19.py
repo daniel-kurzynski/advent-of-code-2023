@@ -18,8 +18,6 @@ def parse_data(data):
 
     return workflows, parts
 
-workflows, parts = parse_data(data)
-
 def process_part(part, rules):
     next_wf = "in"
     while next_wf not in ['A', 'R']:
