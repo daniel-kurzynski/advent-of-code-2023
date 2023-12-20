@@ -129,9 +129,9 @@ def simulate(modules, result_module=None):
 
 def reset_modules(modules):
     for module in modules.values():
-        if isinstance(module, FlipFlopModule):
+        if module.get_type() == 'flipflop':
             module.turned_on = False
-        elif isinstance(module, ConjunctionModule):
+        elif module.get_type() == 'conjunction':
             module.inputs_states = {input: 'low' for input in module.inputs}
 
 def find_cycle(modules, max_simulations, result_module=None, required_result_pulse=None):
@@ -144,14 +144,12 @@ def find_cycle(modules, max_simulations, result_module=None, required_result_pul
         total_high_pulses += high_pulses
 
         # Check if all FlipFlopModules are in their initial state and if requested result pulse has required value
-        if all(not m.turned_on for m in modules.values() if isinstance(m, FlipFlopModule)) and (result_module is None or result_pulse == required_result_pulse):
+        if all(not m.turned_on for m in modules.values() if m.get_type() == 'flipflop') and (result_module is None or result_pulse == required_result_pulse):
             # print(f"Cycle detected after {i} simulations")
             cycle_length = i + 1
             return cycle_length, total_low_pulses, total_high_pulses
 
     return None, total_low_pulses, total_high_pulses
-
-
 
 def simulate_runs(modules, num_simulations):
     cycle_length, total_low_pulses, total_high_pulses = find_cycle(modules, num_simulations)
@@ -166,8 +164,6 @@ def simulate_runs(modules, num_simulations):
         low_pulses, high_pulses = simulate_runs(modules, remaining_simulations)
         return cycles * total_low_pulses + low_pulses, cycles * total_high_pulses + high_pulses
     return cycles * total_low_pulses, cycles * total_high_pulses
-
-
 
 
 modules = parse_data(data)

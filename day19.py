@@ -25,8 +25,8 @@ def process_part(part, rules):
             if operator and eval(f"part['{attribute}']{operator}{int(value)}"):
                 next_wf = outcome
                 break
-        else:
-            next_wf = outcome
+            else:
+                next_wf = outcome
     return next_wf
 
 workflows, parts = parse_data(data)
